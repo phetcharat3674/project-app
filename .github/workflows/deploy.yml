@@ -1,0 +1,38 @@
+name: Deploy GoBook Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter config --enable-web
+      - working-directory: GoBook_Flutter_Project/GoBook_Flutter
+        run: flutter pub get
+      - working-directory: GoBook_Flutter_Project/GoBook_Flutter
+        run: flutter build web --release --base-href /project-app/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: GoBook_Flutter_Project/GoBook_Flutter/build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
